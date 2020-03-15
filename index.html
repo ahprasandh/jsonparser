@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Json Parser</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAR9JREFUOMtjYCAD/Hr3R6W/eeJqcvQyvLr3QlpbXvfh9dM3/UjWfP/6M1FLQ4erLx++6yJZ86MHV/hNdKzPXDx54+S3d7/Z8Cr+/u2PBDL/7Ye7nDr6Mofnzlr94eO7/4oEbduyeedJfj6RLgYGBoaPH9+zlVakbsnJj/n/4e2/QKKcu3lpWakEF8P/wpyMpeu3nl3BIOj+f++V/5OJ9u+3Fzs5l83IfCLEy/mflVv5f/u8K+fvf/vPRlKgvbh7MlNDVvu/hIj2h+vP/qqTHOpfX11j66jtvv3s0c9wBvoA49D/ULqewTj0PxZ+PVwdMh+LAf/xiqPRTFjc0oDdBuyACcPGs6sbGc6uZmRgYGggxgAWuI0wDQgDG1BchMNAAE7ZiTrk4mq4AAAAAElFTkSuQmCC" id="favicon">
+    <style type="text/css">
+        html,body{
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background: #272C32;
+        }
+        .parent{
+        overflow: hidden;
+        /*border: 1px solid #ccc;*/
+        border-radius: 6px;
+        padding: 10px;
+        height: calc(100% - 40px);
+        width: calc(100% - 40px);
+        margin: 10px;
+        }
+        *{
+        margin: 0;
+        padding: 0;
+        }
+        .inputwrapper,.outputwrapper{
+        height: 100%;
+        width: 40%;
+        float: left;
+        }
+        .outputwrapper{
+        width: 60%;
+        font-family: 'DejaVu Sans Mono','Courier New',monospace;
+        font-size: 12px;
+        }
+        .editor{
+        height: calc(100% - 40px);
+        width: calc(100% - 30px);
+        margin: 0 10px;
+        resize: none;
+        border:none;
+        border-radius:0 0 5px 5px;
+        padding: 5px;
+        box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+        background: #2c343b;
+        font-size: 13px;
+        color: #cacaca;
+        }
+
+        .outputArea{
+        margin: 0 10px;
+        border-radius:0 0 5px 5px;
+        height: calc(100% - 50px);
+        overflow: scroll;
+        padding: 10px;
+        overflow-wrap: break-word;
+        box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+        color: #cacaca;
+        }
+
+        .editor:focus {
+        outline: none;
+        background: #2c343b;
+        }
+        .parserList{
+        list-style-type: none;
+        margin: 0;
+        padding: 0 0 0 20px;
+        }
+
+        .parserList li{
+        display: flex;
+        }
+
+        .string {
+        color: #d88859;
+        overflow: hidden;
+        }
+        .number { color: #178e2c; }
+        .boolean { color: #c4a000; }
+        .null {     color: #babdb6;
+        font-style: italic; }
+        .key { position: relative;color: #86bbdc; }
+
+        .brace{
+        cursor: pointer;
+        }
+        .curly{
+        color: #729FCF;
+        }
+        .array{
+        color: #A40000;
+        }
+        .openBrace::before{
+        content: '-';
+        }
+        .array::before{
+        border-color: #a40000;
+        color: #a40000;
+        }
+
+        .icon::before{
+        border-radius: 2px;
+        border-style: solid;
+        border-width: .1em;
+        display: inline-block;
+        line-height: 7px;
+        margin: 0 2px;
+        overflow: hidden;
+        border-color: #729fcf;
+        color: #729fcf;
+        padding-top: 1px;
+        }
+
+        .collapsed::before{
+        content: '+';
+        padding-top: 2px;
+        }
+
+        .jsonOB,.arrayOB{
+        margin-left: 5px;
+        }
+
+        .jsonOB:hover,.arrayOB:hover{
+        margin-left: 4px;
+        border-left: 1px dotted #fff;
+        border-radius: 5px;
+        }
+
+        .error .outputTop{
+        background: #FF8A80;
+        color: #fff;
+        }
+
+        .error .outputArea{
+        background: #FFEBEE;
+        }
+
+        .errorColumn{
+        background: #F44336;
+        }
+
+        .encode{
+        font-size: 12px;
+        cursor: pointer;
+        color: #fff;
+        border-radius: 4px;
+        margin: 5px 0 0 10px;
+        padding: 5px;
+        display: inline-block;
+        background: #333;
+        float: right;
+        }
+
+        .decode{
+        color: #000;
+        background: #cacaca;
+        }
+
+        .inputTop,.outputTop{
+        padding: 0 20px;
+        background: #1d2227;
+        margin: 0 10px;
+        width: calc(100% - 59px);
+        border-radius:5px 5px 0 0;
+        height: 35px;
+        box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+        overflow: hidden;
+        color: #ccc;
+        }
+
+        .outputTop{
+        background: #1d2227;
+        }
+
+        .title{
+        font-size: 15px;
+        font-weight: 600;
+        padding-top: 9px;
+        float: left;
+        width: 50%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        }
+
+        .userselect{
+        user-select:all;
+        cursor: pointer;
+        }
+        .nouserselect{
+        user-select:none;
+        }
+
+        .keyToolTip{
+        display: none;
+        position: absolute;
+        background: #1c2227;
+        width: fit-content;
+        text-align: center;
+        margin-top: -20px;
+        padding: 2px;
+        border-radius: 3px;
+        color: #cacaca;
+        z-index: 9999;
+        cursor: pointer;
+        width: 100px;
+        }
+        .key:hover .keyToolTip{
+        display: block;
+        }
+
+
+    </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script type="text/javascript">
+    var jsonParserComponent={
+        props:["json","last","lastkey"],
+        data:function(){
+            return {
+                collapse : true
+            }
+        },
+        template:
+        `   <span v-if="json === null" class="null">null<span class="nouserselect" v-if="!last">,</span></span>
+            <span v-else-if="typeof json === 'string'" class="string userselect"><span class="nouserselect">"</span>{{json}}<span class="nouserselect">"</span><span class="nouserselect" v-if="!last">,</span></span>
+            <span v-else-if="typeof json === 'number' || typeof json === 'boolean'" class="userselect" :class="{'number':typeof json === 'number','boolean':typeof json === 'boolean'}">{{json}}<span class="nouserselect" v-if="!last">,</span></span>
+            <div v-else-if="json instanceof Array"  class="arrayOB">
+                <span :class="{'collapsed':!collapse}" class="array brace openBrace"  @click="collapse=!collapse">[</span>
+                    <ul v-if="collapse">
+                        <li  v-for="value,i in json">
+                            <jsonparser :json="value" :last="i==json.length-1" :lastkey="lastkey+'['+i+']'"></jsonparser>
+                        </li>
+                    </ul>
+                    <span class="count" v-else v-text="json.length" @click="collapse=!collapse"/>
+                <span class="array brace">]<span class="nouserselect" v-if="!last">,</span></span>
+            </div>
+            <div v-else class="jsonOB" >
+                <span :class="{'collapsed':!collapse}" class="curly brace openBrace" @click="collapse=!collapse">{</span>
+                <ul v-if="collapse" class="parserList">
+                    <li v-for="value,key,i in json" >
+                        <span class="key">"{{key}}"<span class="keyToolTip">{{lastkey+'.'+key}}</span></span> :
+
+                        <jsonparser :json="value" :last="i===Object.keys(json).length-1" :lastkey="lastkey+'.'+key"></jsonparser>
+                    </li>
+                </ul>
+                <span class="count" v-else>...</span>
+                <span class="curly brace" @click="collapse=!collapse">}<span class="nouserselect" v-if="!last">,</span></span>
+            </div>`,
+        methods:{
+            parseJSON:function(json){
+                var parser={value:json};
+                if(json === null){
+                    parser.type="null";
+                }else if(typeof json === 'number'){
+                    parser.type="number";
+                }else if(typeof json === 'boolean'){
+                    parser.type="boolean"
+                }else if(typeof json === 'string'){
+                    parser.type="string"
+                }else if(json instanceof Array) {
+                    parser.type="array"
+                    parser.value=[]
+                    for(i in json){
+                        parser.value.push(this.parseJSON(json[i]))
+                    }
+                }else{
+                    var keyarray=Object.keys(json)
+                    var lastKey=keyarray[keyarray.length-1];
+                    parser.type="object"
+                    parser.value={}
+                    for(key in json){
+                        parser.value[key]=this.parseJSON(json[key]);
+                    }
+                }
+                return parser;
+            }
+        }
+    }
+    var App = {
+      template:
+      `<div class="parent">
+          <div class="inputwrapper">
+            <div class="inputTop">
+              <span class="title">Json Parser, UTF-8 Encoder &amp; Decoder</span>
+              <span class="encode" @click="encode()">Encode</span>
+              <span class="encode decode" @click="decode()">Decode</span>
+            </div>
+            <textarea  class="editor" id="editor" spellcheck="false" v-model="input" contenteditable="true"></textarea>
+          </div>
+          <div class="outputwrapper" id="outputwrapper">
+            <div class="outputTop">
+              <span id="outputTitle" class="title" v-text="mode">Json Parser, UTF-8 Encoder &amp; Decoder</span>
+              <span class="encode" @click="copy()">Copy</span>
+            </div>
+            <div v-if="json && mode==='Json Parser'" id="outputArea" class="outputArea">
+              <jsonparser  :json="json" last="true" lastkey="json"></jsonparser>
+            </div>
+            <div v-else id="outputArea" class="outputArea">
+              {{output.partial}}
+              <span v-if="error" class="errorColumn">{{output.error}} </span>
+            </div>
+          </div>
+        </div>`,
+      name: "JSON-Parser",
+      data:function(){
+        return {
+          input:'{"ID":null,"name":"Doe","first-name":"John","age":25,"hobbies":["reading","cinema",{"sports":["volley-ball","badminton"]}],"address":{}}',
+          output:{
+            partial:'',
+            error:''
+          },
+          json:null,
+          error:false,
+          mode:null
+        }
+      },
+      mounted:function(){
+        this.parseJSON()
+      },
+      methods:{
+        parseJSON(){
+          var text=this.input;
+            if(text!=null && text!==''){
+              try{
+                text =text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                text=JSON.parse(text);
+                this.json=text
+                this.mode='Json Parser';
+              }catch(err){
+
+                this.json=null
+                this.mode='error';
+                this.error=true;
+                if (err instanceof SyntaxError) {
+                  var lineNumber=err.message.split('position ')[1];
+                  if(lineNumber){
+                    lineNumber=parseInt(lineNumber)
+                    this.output.partial=text.slice(0,lineNumber)
+                    this.output.error=text.slice(lineNumber,text.length);
+                  }else if(err.message==="Unexpected end of JSON input"){
+                    this.output.error=err.message;
+                  }
+                }
+
+              }
+          }
+        },
+        encode:function(){
+          this.json=null
+          this.mode='Encoder';
+          this.error=false;
+          this.output.partial=encodeURIComponent(this.input)
+        },
+        decode:function(){
+          this.json=null
+          this.mode='Decoder';
+          this.error=false;
+          this.output.partial=decodeURIComponent(this.input)
+        },
+        copy: function() {
+            var text='';
+            if(this.mode==='Encoder' || this.mode==='Decoder'){
+              text=this.output.partial
+            }else if(!this.error){
+              text=JSON.stringify(this.json)
+            }
+            if (!navigator.clipboard) {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+
+                // Avoid scrolling to bottom
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                document.execCommand('copy');
+                  this.message("Copied")
+                } catch (err) {
+                  this.message("Not Copied")
+                }
+
+                document.body.removeChild(textArea);
+                return;
+            }
+            var message=this.message
+            navigator.clipboard.writeText(text).then(function() {
+                message("Copied")
+            }, function(err) {
+                message("Not Copied")
+            });
+        },
+        message(m){
+          alert(m)
+        }
+      },
+      watch: {
+        'input':function(){
+          this.parseJSON()
+        }
+      }
+    };
+
+
+  </script>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/javascript">
+  Vue.config.devtools = true;
+  Vue.component('jsonparser', jsonParserComponent);
+  var app = new Vue({
+        el:"#app",
+        render: function(data){ return data(App);}
+    });
+</script>
+</body>
+</html>

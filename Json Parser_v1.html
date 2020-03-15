@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!-- saved from url=(0029)http://json.parser.online.fr/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Json Parser</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAR9JREFUOMtjYCAD/Hr3R6W/eeJqcvQyvLr3QlpbXvfh9dM3/UjWfP/6M1FLQ4erLx++6yJZ86MHV/hNdKzPXDx54+S3d7/Z8Cr+/u2PBDL/7Ye7nDr6Mofnzlr94eO7/4oEbduyeedJfj6RLgYGBoaPH9+zlVakbsnJj/n/4e2/QKKcu3lpWakEF8P/wpyMpeu3nl3BIOj+f++V/5OJ9u+3Fzs5l83IfCLEy/mflVv5f/u8K+fvf/vPRlKgvbh7MlNDVvu/hIj2h+vP/qqTHOpfX11j66jtvv3s0c9wBvoA49D/ULqewTj0PxZ+PVwdMh+LAf/xiqPRTFjc0oDdBuyACcPGs6sbGc6uZmRgYGggxgAWuI0wDQgDG1BchMNAAE7ZiTrk4mq4AAAAAElFTkSuQmCC" id="favicon">
+  <style type="text/css">
+    html,body{
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    .parent{
+      background: #fefefe;
+      overflow: hidden;
+      /*border: 1px solid #ccc;*/
+      border-radius: 6px;
+      padding: 10px;
+      height: calc(100% - 40px);
+      width: calc(100% - 40px);
+      margin: 10px;
+    }
+    *{
+      margin: 0;
+      padding: 0;
+    }
+    .inputwrapper,.outputwrapper{
+      height: 100%;
+      width: 40%;
+      float: left;
+    }
+    .outputwrapper{
+      width: 60%;
+      font-family: 'DejaVu Sans Mono','Courier New',monospace;
+      font-size: 12px;
+    }
+    .editor{
+      height: calc(100% - 40px);
+      width: calc(100% - 30px);
+      margin: 0 10px;
+      resize: none;
+      border:none;
+      border-radius:0 0 5px 5px;
+      padding: 5px;
+      box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+      background: #E3F2FD;
+      font-size: 13px;
+    }
+
+    .outputArea{
+      margin: 0 10px;
+      border-radius:0 0 5px 5px;
+      height: calc(100% - 50px);
+      overflow: scroll;
+      padding: 10px;
+      overflow-wrap: break-word;
+      background: #E8F5E9;
+      box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+    }
+
+    .editor:focus {
+      outline: none;
+      background: #E8EAF6;
+    }
+    ul{
+      list-style-type: none;
+      margin: 0;
+      padding: 0 0 0 20px;
+    }
+    .string { 
+      color: #304FFE;
+     }
+    .number { color: #FF4081; }
+    .boolean { color: #c4a000; }
+    .null {     color: #babdb6;
+    font-style: italic; }
+    .key { color: #1A237E; }
+
+    .brace{
+      cursor: pointer;
+    }
+    .curly{
+      color: #729FCF;
+    }
+    .array{
+      color: #A40000;
+    }
+    .openBrace::before{
+      content: '-';
+    }
+    .array::before{
+      border-color: #a40000;
+      color: #a40000;
+    }
+
+    .icon::before{
+      border-radius: 2px;
+      border-style: solid;
+      border-width: .1em;
+      display: inline-block;
+      line-height: 7px;
+      margin: 0 2px;
+      overflow: hidden;
+      border-color: #729fcf;
+      color: #729fcf;
+      padding-top: 1px;
+    }
+
+    .collapsed::before{
+      content: '+';
+      padding-top: 2px;
+    }
+
+    .error .outputTop{
+      background: #FF8A80;
+      color: #fff;
+    }
+
+    .error .outputArea{
+      background: #FFEBEE;
+    }
+
+    .errorColumn{
+      background: #F44336;
+    }
+
+    .encode{
+      font-size: 12px;
+      cursor: pointer;
+      color: #fff;
+      border-radius: 4px;
+      margin: 5px 0 0 10px;
+      padding: 5px;
+      background: #1E88E5;
+      float: right;
+    }
+
+    .decode{
+      color: #1E88E5;
+      background: #fff;
+    }
+
+    .inputTop,.outputTop{
+      padding: 0 20px;
+      background: #82B1FF;
+      margin: 0 10px;
+      width: calc(100% - 59px);
+      border-radius:5px 5px 0 0;
+      height: 35px;
+      box-shadow: 0 0 12px 0 rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .outputTop{
+      background: #B9F6CA;
+    }
+
+    .title{
+      font-size: 15px;
+      font-weight: 600;
+      padding-top: 9px;
+      float: left;
+      width: 50%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+
+  </style>
+  <script type="text/javascript">
+    init=function(){
+      document.getElementById("editor").oninput=parseJson;
+      parseJson();
+    }
+    parseJson=function(){
+      var text=document.getElementById("editor").value;
+      if(text!=null && text!==''){
+        try{
+          text =text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '"').replace(/None/g, 'null');
+          document.getElementById("outputwrapper").className="outputwrapper";
+          text=JSON.parse(text);
+          text=parseAndAddHtml(text);
+          document.getElementById("outputArea").innerHTML=text;
+          document.getElementById("outputTitle").innerHTML="Json Parser";
+        }catch(err){
+          document.getElementById("outputwrapper").className="outputwrapper error";
+          if (err instanceof SyntaxError) {
+            var lineNumber=err.message.split('position ')[1];
+            document.getElementById("outputTitle").innerHTML="Error";
+            if(lineNumber){
+              lineNumber=parseInt(lineNumber)
+              document.getElementById("outputArea").innerHTML=text.slice(0,lineNumber)+'<span class="errorColumn">'+text.slice(lineNumber,text.length)+"</span>";     
+            }else if(err.message==="Unexpected end of JSON input"){
+              document.getElementById("outputArea").innerHTML=err.message;
+            }
+          }
+        }
+      }else{
+        document.getElementById("outputArea").innerHTML='';
+        document.getElementById("outputTitle").innerHTML="Json Parser";
+      }
+    }
+
+    parseAndAddHtml=function(json){
+      var text="";
+      if(json === null){
+        text+='<span class="null">null</span>';
+      }else if(typeof json === 'number'){
+        text+='<span class="number">'+json+'</span>';
+      }else if(typeof json === 'boolean'){
+        text+='<span class="boolean">'+json+'</span>';
+      }else if(typeof json === 'string'){
+        text+='<span class="string">"'+json+'"</span>'
+      }else if(json instanceof Array) {
+        text+='<span class="arrayOB"><span class="array brace openBrace icon" onclick="collapse(event,true)">[</span><ul>';
+        var length=json.length-1;
+        for(i in json){
+          text+='<li>'
+          text+=parseAndAddHtml(json[i]);
+          text+=i==length?'</li>':",</li>"
+        }
+        text+='</ul><span class="array brace">]</span></span>'
+      }else{
+        text+='<span class="jsonOB"><span class="curly brace openBrace icon" onclick="collapse(event)">{</span><ul>';
+        var keyarray=Object.keys(json)
+        var lastKey=keyarray[keyarray.length-1];
+        for(key in json){
+          text+='<li><span class="key">"'+key+'"</span>:';
+          text+=parseAndAddHtml(json[key]);
+          if(lastKey && key===lastKey){
+
+            text+='</li>'
+          }else{
+            text+=",</li>"
+          }
+        }
+        text+='</ul><span class="curly brace">}</span></span>'
+      }
+      return text;
+    }
+
+    collapse=function(event,isArrayObject){
+      event.stopPropagation()
+      var elem=event.srcElement.parentElement;
+      elem.setAttribute('content',elem.innerHTML);
+      if(isArrayObject){
+        elem.innerHTML='<span class="array brace collapsed icon">[</span>'+(elem.childNodes[1].childElementCount)+'<span class="array brace">]</span>';  
+      }else{
+        elem.innerHTML='<span class="curly brace collapsed icon">{</span>...<span class="curly brace">}</span>';  
+      }
+      elem.onclick = expand;
+    }
+
+    expand=function(){
+      var elem=this
+      elem.innerHTML=elem.getAttribute('content');
+      elem.removeAttribute('content');
+      elem.onclick=null;
+    }
+
+    encode=function(){
+      document.getElementById("outputwrapper").className="outputwrapper";
+      document.getElementById("outputArea").innerHTML=encodeURIComponent(document.getElementById("editor").value);
+      document.getElementById("outputTitle").innerHTML="Encoder";
+    }
+    decode=function(){
+      document.getElementById("outputwrapper").className="outputwrapper";
+      document.getElementById("outputArea").innerHTML=decodeURIComponent(document.getElementById("editor").value);
+      document.getElementById("outputTitle").innerHTML="Decoder";
+    }
+
+    
+  </script>
+</head>
+<body>
+  <div class="parent">
+    <div class="inputwrapper">
+      <div class="inputTop">
+        <span class="title">Json Parser, UTF-8 Encoder &amp; Decoder</span>
+        <span class="encode" onclick="encode()">Encode</span>
+        <span class="encode decode" onclick="decode()">Decode</span>
+      </div>
+      <textarea class="editor" id="editor" spellcheck="false" contenteditable="true">{"ID":null,"name":"Doe","first-name":"John","age":25,"hobbies":["reading","cinema",{"sports":["volley-ball","badminton"]}],"address":{}}</textarea>
+    </div>
+    <div class="outputwrapper error" id="outputwrapper">
+      <div class="outputTop">
+        <span id="outputTitle" class="title">Error</span>
+      </div>
+      <div id="outputArea" class="outputArea"></div>
+    </div>
+  </div>
+<script type="text/javascript">
+  init();
+</script>
+
+</body></html>
